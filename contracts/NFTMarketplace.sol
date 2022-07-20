@@ -22,10 +22,66 @@ contract NFTMarketplace is ERC721, ERC721URIStorage, Ownable {
         bool currentlyListed;
     }
 
+    //the event emitted when a token is successfully listed
+    event TokenListedSuccess(
+        uint256 indexed tokenId,
+        address owner,
+        address seller,
+        uint256 price,
+        bool currentlyListed
+    );
+
     mapping(uint256 => ListedToken) private idToListedToken;
 
     constructor() ERC721("NFTMarketplace", "NFTM") {
         owner = payable(msg.sender);
+    }
+
+    function createToken(string memory _tokenURI, uint256 _price)
+        public
+        payable
+        returns (uint256)
+    {
+        _tokenIds.increment(); //Increment the tokenId counter
+        uint256 newTokenId = _tokenIds.current();
+        _safeMint(msg.sender, newTokenId); //Mint the NFT with tokenId newTokenId to the address who called createToken
+        _setTokenURI(newTokenId, _tokenURI); //Map the tokenId to the tokenURI (which is an IPFS URL)
+        createListedToken(newTokenId, _price);
+        return newTokenId;
+    }
+
+    function createListedToken(uint256 _tokenId, uint256 _price) private {
+        require(msg.value == _price, "sending the correct price");
+        require(_price > 0, "Make sure the price isn't negative");
+        //Update the mapping of tokenId's to Token details
+        idToListedToken[_tokenId] = ListedToken(
+            _tokenId,
+            payable(address(this)),
+            payable(msg.sender),
+            _price,
+            true
+        );
+        _transfer(msg.sender, address(this), _tokenId);
+        emit TokenListedSuccess(
+            _tokenId,
+            address(this),
+            msg.sender,
+            _price,
+            true
+        );
+    }
+
+    function getAllNFTs() public view returns (ListedToken[] memory) {
+        uint256 nftCount = _tokenIds.current();
+        ListedToken[] memory tokens = new ListedToken[](nftCount); //returning array of nftCount length
+        uint256 currentIndex = 0;
+        for (uint256 i = 0; i < nftCount; i++) {
+            uint256 currentId = i + 1;
+            ListedToken storage currentItem = idToListedToken[currentId];
+            tokens[currentIndex] = currentItem;
+            currentIndex += 1;
+        }
+        return tokens; //the array 'tokens' has the list of all NFTs in the marketplace
     }
 
     //helper function
@@ -56,13 +112,6 @@ contract NFTMarketplace is ERC721, ERC721URIStorage, Ownable {
 
     function getCurrentToken() public view returns (uint256) {
         return _tokenIds.current();
-    }
-
-    function safeMint(address to, string memory uri) public onlyOwner {
-        uint256 tokenId = _tokenIds.current();
-        _tokenIds.increment();
-        _safeMint(to, tokenId);
-        _setTokenURI(tokenId, uri);
     }
 
     // The following functions are overrides required by Solidity.
