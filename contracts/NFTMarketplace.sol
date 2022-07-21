@@ -84,6 +84,56 @@ contract NFTMarketplace is ERC721, ERC721URIStorage, Ownable {
         return tokens; //the array 'tokens' has the list of all NFTs in the marketplace
     }
 
+    function getMyNFTs() public view returns (ListedToken[] memory) {
+        uint256 totalItemCount = _tokenIds.current();
+        uint256 itemCount = 0;
+        uint256 currentIndex = 0;
+
+        for (uint256 i = 0; i < totalItemCount; i++) {
+            if (
+                idToListedToken[i + 1].owner == msg.sender ||
+                idToListedToken[i + 1].seller == msg.sender
+            ) {
+                itemCount += 1;
+            }
+        }
+
+        ListedToken[] memory items = new ListedToken[](itemCount);
+        for (uint256 i = 0; i < totalItemCount; i++) {
+            if (
+                idToListedToken[i + 1].owner == msg.sender ||
+                idToListedToken[i + 1].seller == msg.sender
+            ) {
+                uint256 currentId = i + 1;
+                ListedToken storage currentItem = idToListedToken[currentId];
+                items[currentIndex] = currentItem;
+                currentIndex += 1;
+            }
+        }
+        return items;
+    }
+
+    function executeSale(uint256 _tokenId) public payable {
+        uint256 price = idToListedToken[_tokenId].price;
+        address seller = idToListedToken[_tokenId].seller;
+        require(
+            msg.value == price,
+            "Please submit the asking price in order to complete the purchase"
+        );
+        //update token struct
+        idToListedToken[_tokenId].currentlyListed = true;
+        idToListedToken[_tokenId].seller = payable(msg.sender);
+        _itemsSold.increment();
+
+        _transfer(address(this), msg.sender, _tokenId);
+        //approve the marketplace to sell NFTs on your behalf
+        approve(address(this), _tokenId);
+        //Transfer the listing fee to the marketplace creator
+        payable(owner).transfer(listPrice);
+        //Transfer the proceeds from the sale to the seller of the NFT
+        payable(seller).transfer(msg.value);
+    }
+
     //helper function
     function updateListPrice(uint256 _listPrice) public payable onlyOwner {
         listPrice = _listPrice;
