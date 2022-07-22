@@ -1,12 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.4;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/Counters.sol";
 
-contract NFTMarketplace is ERC721, ERC721URIStorage, Ownable {
+contract NFTMarketplace is ERC721, ERC721URIStorage {
     using Counters for Counters.Counter;
 
     address payable owner;
@@ -135,7 +134,8 @@ contract NFTMarketplace is ERC721, ERC721URIStorage, Ownable {
     }
 
     //helper function
-    function updateListPrice(uint256 _listPrice) public payable onlyOwner {
+    function updateListPrice(uint256 _listPrice) public payable {
+        require(owner == msg.sender, "Only owner can update listing price");
         listPrice = _listPrice;
     }
 
