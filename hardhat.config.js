@@ -1,6 +1,6 @@
 require("@nomiclabs/hardhat-waffle");
 require("@nomiclabs/hardhat-ethers");
-const fs = require("fs");
+// const fs = require("fs");
 // const infuraId = fs.readFileSync(".infuraid").toString().trim() || "";
 require("dotenv").config();
 
@@ -18,9 +18,9 @@ module.exports = {
     hardhat: {
       chainId: 1337,
     },
-    rinkeby: {
-      url: process.env.ALCHEMY_API_KEY_URL,
-      accounts: [process.env.RINKEBY_PRIVATE_KEY],
+    georli: {
+      url: process.env.REACT_APP_ALCHEMY_API_URL,
+      accounts: [process.env.REACT_APP_PRIVATE_KEY],
     },
   },
   solidity: {
